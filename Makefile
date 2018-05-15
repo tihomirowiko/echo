@@ -11,3 +11,5 @@ $(OBJ): $(SOURCES)
 
 clean:
 	rm -f *.o serv
+cleano:
+	rm -f *.o
