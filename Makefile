@@ -1,4 +1,4 @@
-CC=gcc
+CC=g++
 SOURCES=serv.c
 OBJ=$(SOURCES:.c=.o)
 CFFLAGS=-c
