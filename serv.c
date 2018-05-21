@@ -35,27 +35,31 @@ int main(int argc, char** argv){
   addr.sin_addr.s_addr = htons(INADDR_ANY);
   addr.sin_port = htons(22000);
   
-  bind(listenFd, (struct sockaddr *) &addr, sizeof(addr));
+  res = bind(listenFd, (struct sockaddr *) &addr, sizeof(addr));
+  if (res < 0) error("bind");
   listen(listenFd, 10);
 
   socklen_t sizeAddr = sizeof(addr);
   commFd = accept(listenFd, (struct sockaddr *) &addr, &sizeAddr);
+  if (commFd < 0) error("accept");
   while(1)
   {
     buffs = "";
     memset(buff, 0, 100);
     do {
-      res =  recv(commFd, buff, 100, MSG_PEEK);
+      res =  recv(commFd, buff, 100, 0);
       if (res > 0) {
 	buffs += buff;
 	memset(buff, 0, 100);
+	std::cout << "serv " << res << std::endl;
       }else if(res == 0){
       }else{
 	error("recv");
       }
-    }while(res < 100);
-    std::cout << buffs << std::endl;
-    res = send(commFd, buffs.c_str(), buffs.size(), NULL);
+    }while(res == 100);
+    if (buffs != "")
+      std::cout << "Serv: " << buffs << std::endl;
+    res = send(commFd, buffs.c_str(), buffs.size(), 0);
     if (res < 0)
       error("send");
   }

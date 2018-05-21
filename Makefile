@@ -1,15 +1,19 @@
 CC=g++
-SOURCES=serv.c
+SOURCES=serv.c client.c
 OBJ=$(SOURCES:.c=.o)
 CFFLAGS=-c
 
-all: serv
+all: serv client
 serv: $(OBJ)
 	$(CC) $< -o $@
-$(OBJ): $(SOURCES)
+serv.o: serv.c
+	$(CC) $(CFFLAGS) $< -o $@
+client: client.o
+	$(CC) $< -o $@
+client.o: client.c
 	$(CC) $(CFFLAGS) $< -o $@
 
 clean:
-	rm -f *.o serv
+	rm -f *.o serv client
 cleano:
 	rm -f *.o
