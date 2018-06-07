@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
 
 void error(const std::string str){
   perror(str.c_str());
@@ -30,6 +31,7 @@ int main(int argc, char** argv){
   size_t res = 0;
 
   listenFd = socket(AF_INET, SOCK_STREAM, 0);
+  //fcntl(listenFd, F_SETFL, O_NONBLOCK);
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_port = htons(portNum);

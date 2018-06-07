@@ -1,7 +1,7 @@
 CC=g++
 SOURCES=serv.c client.c
 OBJ=$(SOURCES:.c=.o)
-CFFLAGS=-c
+CFFLAGS=-c -lm -DLINUX
 
 all: serv client
 serv: $(OBJ)
