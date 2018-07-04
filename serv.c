@@ -13,9 +13,11 @@
 #include <sys/select.h>
 #include <set>
 #include <sys/ioctl.h>
+#include <errno.h>
 
-void error(const std::string str){
+void error(const std::string str, int codeErr){
   perror(str.c_str());
+  std::cout << " errno = " << codeErr << "\n";
   exit(0);
 }
 
@@ -58,9 +60,9 @@ int main(int argc, char** argv){
   addr.sin_port = htons(22000);
   
   res = bind(listenFd, (struct sockaddr *) &addr, sizeof(addr));
-  if (res < 0) error("bind");
+  if (res < 0) error("bind", errno);
   res = listen(listenFd, 10);
-  if (res < 0) error("listen");
+  if (res < 0) error("listen", errno);
   
   timeout.tv_sec = 60;
   timeout.tv_usec = 0;
@@ -72,27 +74,25 @@ int main(int argc, char** argv){
     std::cout << "loop\n";
     buffs = "";
     memset(buff, 0, 100);
+    timeout.tv_sec = 60;
 
     
 
     FD_ZERO(&readSock);
-    FD_SET(listenFd, &readSock);
-    print("servSock  size", servSocket.size()); 
+    FD_SET(listenFd, &readSock); 
     for(std::set<long>::iterator i = servSocket.begin(); i != servSocket.end(); i++){
-      print("servSock", *i);
       FD_SET(*i, &readSock);
     }
 
-    print("before select", 0);
+    
     countSock = select(listenFd+servSocket.size()+1, &readSock, NULL, NULL, &timeout);
     if(countSock < 0)
-      error("select");
-    print("select", countSock);
+      error("select", errno);
 
     if(FD_ISSET(listenFd, &readSock)){
       commFd = accept(listenFd, (struct sockaddr *)&addr, &sizeAddr);
       if(commFd < 0)
-	error("accept");
+	error("accept", errno);
       else if(servSocket.insert(commFd).second){
 	//fcntl(commFd, F_SETFL, O_NONBLOCK);
 	ioctl(commFd, FIONBIO, (char *)&on);
@@ -101,7 +101,6 @@ int main(int argc, char** argv){
 	--countSock;
 	do {
 	  res =  recv(commFd, buff, 100, 0);
-	  print("recv", res);
 	  if (res > 0) {
 	    buffs += buff;
 	    memset(buff, 0, 100);
@@ -110,24 +109,22 @@ int main(int argc, char** argv){
 	    close(commFd);
 	    servSocket.erase(commFd);
 	  }else{
-	    error("recv");
+	    error("recv", errno);
 	  }
 	}while(res == 100);
 	if (buffs != "")
 	  std::cout << "Serv: " << buffs << std::endl;
 	res = send(commFd, buffs.c_str(), buffs.size(), 0);
-	print("send", res);
 	if (res < 0)
-	  error("send");
+	  error("send", errno);
       }
     }
     
+
     
-    for(int i=0; i < countSock; i++){
-      print("lll", readSock.fds_bits[i]/4);
-      if(FD_ISSET(readSock.fds_bits[i]/4, &readSock)){
-	commFd = readSock.fds_bits[i]/4;
-	print("fd_isset", commFd);
+    for(std::set<long>::iterator i = servSocket.begin(); i != servSocket.end(); ++i){
+      if(FD_ISSET(*i, &readSock)){
+	commFd = *i;
 	do {
 	  res =  recv(commFd, buff, 100, 0);
 	  if (res > 0) {
@@ -138,17 +135,17 @@ int main(int argc, char** argv){
 	    close(commFd);
 	    servSocket.erase(commFd);
 	  }else{
-	    error("recv");
+	    error("recv", errno);
 	  }
 	}while(res == 100);
 	if (buffs != "")
 	  std::cout << "Serv: " << buffs << std::endl;
 	res = send(commFd, buffs.c_str(), buffs.size(), 0);
 	if (res < 0)
-	  error("send");
+	  error("send", errno);
       }
     }
-    sleep(1);
+    //sleep(1);
   }
   
   
