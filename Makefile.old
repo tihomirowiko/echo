@@ -1,0 +1,21 @@
+CC=g++
+SOURCES=serv.c client.c user.c
+OBJ=$(SOURCES:.c=.o)
+CFFLAGS=-c -lm -DLINUX
+
+all: serv client
+serv: $(OBJ)
+	$(CC) $< -o $@
+serv.o: serv.c user.h
+	$(CC) $(CFFLAGS) $< -o $@
+client: client.o user.o
+	$(CC) $< -o $@
+client.o: client.c user.h
+	$(CC) $(CFFLAGS) $< -o $@
+user.o: user.c user.h
+	$(CC) $(CFFLAGS) $< -o $@
+
+clean:
+	rm -f *.o serv client
+cleano:
+	rm -f *.o

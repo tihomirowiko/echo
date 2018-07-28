@@ -35,7 +35,7 @@ int main(int argc, char** argv){
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_port = htons(portNum);
-  inet_pton(AF_INET, "127.0.0.1", &(addr.sin_addr));
+  inet_pton(AF_INET, "192.168.1.40", &(addr.sin_addr));
   res = connect(listenFd, (struct sockaddr *) &addr, sizeof(addr));
   if (res < 0)
     error("connect");

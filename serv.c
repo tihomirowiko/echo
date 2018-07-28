@@ -14,6 +14,7 @@
 #include <set>
 #include <sys/ioctl.h>
 #include <errno.h>
+#include "user.h"
 
 void error(const std::string str, int codeErr){
   perror(str.c_str());
@@ -38,16 +39,17 @@ int main(int argc, char** argv){
     portNum = std::atoi(argv[1]);
   }
   
-   fd_set readSock;
+  fd_set readSock;
   struct timeval timeout;
   std::set<long> servSocket;
+  std::set<User> servUser;
   struct sockaddr_in addr;
   long listenFd, commFd;
   std::string buffs = "";
   char buff[100];
   size_t res = 0;//result of different funcs
   int countSock;
-  int on =1;
+  int on = 1;
   
   listenFd = socket(AF_INET, SOCK_STREAM, 0);
   //fcntl(listenFd, F_SETFL, O_NONBLOCK);
@@ -76,16 +78,21 @@ int main(int argc, char** argv){
     memset(buff, 0, 100);
     timeout.tv_sec = 60;
 
-    
-
     FD_ZERO(&readSock);
     FD_SET(listenFd, &readSock); 
-    for(std::set<long>::iterator i = servSocket.begin(); i != servSocket.end(); i++){
-      FD_SET(*i, &readSock);
-    }
+    /* for(std::set<long>::iterator i = servSocket.begin(); i != servSocket.end(); i++){ */
+    /*   FD_SET(*i, &readSock); */
+    /* } */
+
+    for(std::set<User>::iterator i = servUser.begin(); i != servUser.end(); ++i)
+      {
+	FD_SET(i->GetFD(), &readSock);
+      }
 
     
     countSock = select(listenFd+servSocket.size()+1, &readSock, NULL, NULL, &timeout);
+    if(countSock == 0)
+      break;
     if(countSock < 0)
       error("select", errno);
 
@@ -97,6 +104,8 @@ int main(int argc, char** argv){
 	//fcntl(commFd, F_SETFL, O_NONBLOCK);
 	ioctl(commFd, FIONBIO, (char *)&on);
 	servSocket.insert(commFd);
+	User name(commFd, "name", addr);
+	servUser.insert(name);
 	print("connect", commFd);
 	--countSock;
 	do {
